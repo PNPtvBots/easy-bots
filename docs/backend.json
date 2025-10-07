@@ -1,0 +1,153 @@
+{
+  "entities": {
+    "Product": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Product",
+      "type": "object",
+      "description": "Represents a product in the EasyBots store.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the product."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the product."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the product."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the product image.",
+          "format": "uri"
+        },
+        "priceUsd": {
+          "type": "number",
+          "description": "Price of the product in USD."
+        },
+        "priceCop": {
+          "type": "number",
+          "description": "Price of the product in COP."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "imageUrl",
+        "priceUsd",
+        "priceCop"
+      ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a transaction in the EasyBots store.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the transaction."
+        },
+        "orderId": {
+          "type": "string",
+          "description": "Order ID from the Bold Checkout system."
+        },
+        "productId": {
+          "type": "string",
+          "description": "Reference to Product. (Relationship: Product 1:N Transaction)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "User ID associated with the transaction."
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount of the transaction."
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency of the transaction (USD or COP)."
+        },
+        "status": {
+          "type": "string",
+          "description": "Status of the transaction (e.g., paid, cancelled)."
+        },
+        "reference": {
+          "type": "string",
+          "description": "Reference information for the transaction."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp of the transaction.",
+          "format": "date-time"
+        },
+        "customerInfo": {
+          "type": "string",
+          "description": "Customer details related to the transaction."
+        }
+      },
+      "required": [
+        "id",
+        "orderId",
+        "productId",
+        "userId",
+        "amount",
+        "currency",
+        "status",
+        "reference",
+        "timestamp",
+        "customerInfo"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores product details. Each product has a unique ID.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "Unique identifier for the product."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Stores transaction details associated with a specific user. This structure enforces ownership. Includes userId for easy filtering.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "Unique identifier for the user."
+            },
+            {
+              "name": "transactionId",
+              "description": "Unique identifier for the transaction."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to be secure, scalable, and easily debuggable, following the core design principles and strategy mandates. It ensures authorization independence through denormalization and supports the required QAPs using structural segregation. Transactions are stored under a userId to facilitate ownership and improve security."
+  }
+}
