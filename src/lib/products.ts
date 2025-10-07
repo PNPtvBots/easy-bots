@@ -85,4 +85,16 @@ export const products: Product[] = [
       cop: 196000,
     },
   },
+  {
+    id: 'telegram-bot',
+    name: 'Telegram Bot',
+    name_es: 'Bot de Telegram',
+    description: 'Subscriber management, occupancy, e-commerce sales, and more.',
+    description_es: 'Manejo de suscriptores, ocupación, ventas de e-commerce y más opciones.',
+    image: findImage('telegram-bot'),
+    prices: {
+      usd: 59.99,
+      cop: 240000,
+    },
+  },
 ];
