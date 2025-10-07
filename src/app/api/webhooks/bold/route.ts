@@ -35,48 +35,66 @@ export async function POST(request: NextRequest) {
     const { event: eventType, data } = event;
 
     switch (eventType) {
-      case 'order.paid':
-        console.log('Processing paid order:', data.orderId);
+      case 'transaction.created': // Or whatever the correct event is for a new transaction
+        console.log('Processing new transaction:', data.id);
         
         // 1. Save transaction to Firestore
         const transactionData = {
-          orderId: data.orderId,
-          productId: data.metadata?.productId || 'unknown',
-          userId: data.metadata?.userId || 'anonymous',
-          amount: data.amount,
+          orderId: data.reference, // Assuming reference holds the order id
+          productId: data.payment_method.metadata?.productId || 'unknown',
+          userId: data.payment_method.metadata?.userId || 'anonymous',
+          amount: data.amount_in_cents / 100,
           currency: data.currency,
-          status: 'PAID',
+          status: data.status,
           reference: data.reference,
-          customerName: data.customer?.name || 'N/A',
-          customerPhone: data.customer?.phone || 'N/A',
+          customerName: data.customer.name || 'N/A',
+          customerPhone: data.customer.phone_number || 'N/A',
         };
         await saveTransaction(transactionData);
 
-        // 2. Trigger GenAI notification
-        const notificationInput: PaymentNotificationInput = {
-          orderId: transactionData.orderId,
-          productId: transactionData.productId,
-          userId: transactionData.userId,
-          amount: transactionData.amount,
-          currency: transactionData.currency,
-          status: transactionData.status,
-          reference: transactionData.reference,
-          customerName: transactionData.customerName,
-          customerPhone: transactionData.customerPhone,
-        };
+        // 2. Trigger GenAI notification if payment is successful
+        if (data.status === 'PAID') {
+            const notificationInput: PaymentNotificationInput = {
+              orderId: transactionData.orderId,
+              productId: transactionData.productId,
+              userId: transactionData.userId,
+              amount: transactionData.amount,
+              currency: transactionData.currency,
+              status: transactionData.status,
+              reference: transactionData.reference,
+              customerName: transactionData.customerName,
+              customerPhone: transactionData.customerPhone,
+            };
 
-        await paymentNotification(notificationInput);
-        console.log(`AI notification flow triggered for order ${data.orderId}`);
+            await paymentNotification(notificationInput);
+            console.log(`AI notification flow triggered for order ${data.reference}`);
+        }
         
         break;
 
-      case 'order.cancelled':
-        console.log('Processing cancelled order:', data.orderId);
+      case 'transaction.updated':
+        console.log('Processing transaction update:', data.id);
         
         // 1. Update transaction status in Firestore
-        // This assumes the document was already created on order creation.
-        // If not, you might need a different logic (e.g., create if not exists).
-        await updateTransactionStatus(data.orderId, 'CANCELLED');
+        await updateTransactionStatus(data.reference, data.status);
+        
+        // 2. Potentially trigger notification if it just got paid
+         if (data.status === 'PAID') {
+            const notificationInput: PaymentNotificationInput = {
+              orderId: data.reference,
+              productId: data.payment_method.metadata?.productId || 'unknown',
+              userId: data.payment_method.metadata?.userId || 'anonymous',
+              amount: data.amount_in_cents / 100,
+              currency: data.currency,
+              status: data.status,
+              reference: data.reference,
+              customerName: data.customer.name || 'N/A',
+              customerPhone: data.customer.phone_number || 'N/A',
+            };
+
+            await paymentNotification(notificationInput);
+            console.log(`AI notification flow triggered for updated order ${data.reference}`);
+        }
         break;
 
       default:

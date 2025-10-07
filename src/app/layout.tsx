@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Bot } from 'lucide-react';
+import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
   title: 'EasyBots Store',
@@ -21,10 +22,12 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased min-h-screen bg-background">
-        <main className="container mx-auto px-4 py-12 md:py-16">
-          {children}
-        </main>
-        <Toaster />
+        <FirebaseClientProvider>
+          <main className="container mx-auto px-4 py-12 md:py-16">
+            {children}
+          </main>
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );
