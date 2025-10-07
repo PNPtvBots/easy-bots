@@ -52,10 +52,11 @@ export function ProductCard({ product, lang }: ProductCardProps) {
   const router = useRouter();
 
   const getCheckoutUrl = (currency: 'USD' | 'COP') => {
-    const baseUrl = 'https://checkout.bold.co/';
+    const baseUrl = 'https://checkout.bold.co/v1/payment-link/d9685121-a4f1-4654-a63d-9d29b28b6d3a';
     const params = new URLSearchParams({
-      item_id: product.id,
-      currency: currency,
+      'item-id': product.id,
+      'currency': currency,
+      'payment_method[metadata][productId]': product.id,
     });
 
     if (user) {
@@ -65,6 +66,9 @@ export function ProductCard({ product, lang }: ProductCardProps) {
       }
       if (user.displayName) {
         params.append('customer[name]', user.displayName);
+      }
+      if(user.phoneNumber) {
+        params.append('customer[phone_number]', user.phoneNumber);
       }
     }
     
