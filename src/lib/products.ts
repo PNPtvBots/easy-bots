@@ -73,4 +73,16 @@ export const products: Product[] = [
       cop: 796000,
     },
   },
+  {
+    id: 'landing-page-leads',
+    name: 'Landing Page + Lead Capture',
+    name_es: 'Landing Page + Captura de Leads',
+    description: 'A simple and effective landing page to capture leads for your business.',
+    description_es: 'Una landing page sencilla y efectiva para capturar leads para tu negocio.',
+    image: findImage('landing-page-leads'),
+    prices: {
+      usd: 49,
+      cop: 196000,
+    },
+  },
 ];
