@@ -1,3 +1,4 @@
+
 import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
@@ -30,42 +31,39 @@ export async function POST(request: NextRequest) {
   try {
     const event = JSON.parse(rawBody);
 
-    // Assuming a structure for the event payload.
-    // Adjust based on actual Bold.co webhook structure.
     const { event: eventType, data } = event;
 
+    // Helper function to extract data, now including customer info from top level
+    const extractTransactionData = (d: any) => {
+        const metadata = d.payment_method?.metadata || {};
+        const customer = d.customer || {};
+        
+        return {
+            orderId: d.reference,
+            productId: metadata.productId || 'unknown',
+            userId: metadata.userId || 'anonymous',
+            amount: d.amount_in_cents / 100,
+            currency: d.currency,
+            status: d.status,
+            reference: d.reference,
+            customerName: customer.name || 'N/A',
+            customerEmail: customer.email || 'N/A',
+            customerPhone: customer.phone_number || 'N/A',
+        };
+    };
+
     switch (eventType) {
-      case 'transaction.created': // Or whatever the correct event is for a new transaction
+      case 'transaction.created':
         console.log('Processing new transaction:', data.id);
         
-        // 1. Save transaction to Firestore
-        const transactionData = {
-          orderId: data.reference, // Assuming reference holds the order id
-          productId: data.payment_method.metadata?.productId || 'unknown',
-          userId: data.payment_method.metadata?.userId || 'anonymous',
-          amount: data.amount_in_cents / 100,
-          currency: data.currency,
-          status: data.status,
-          reference: data.reference,
-          customerName: data.customer.name || 'N/A',
-          customerPhone: data.customer.phone_number || 'N/A',
-        };
-        await saveTransaction(transactionData);
+        const newTransactionData = extractTransactionData(data);
+        await saveTransaction(newTransactionData);
 
-        // 2. Trigger GenAI notification if payment is successful
-        if (data.status === 'PAID') {
+        if (newTransactionData.status === 'PAID') {
             const notificationInput: PaymentNotificationInput = {
-              orderId: transactionData.orderId,
-              productId: transactionData.productId,
-              userId: transactionData.userId,
-              amount: transactionData.amount,
-              currency: transactionData.currency,
-              status: transactionData.status,
-              reference: transactionData.reference,
-              customerName: transactionData.customerName,
-              customerPhone: transactionData.customerPhone,
+              ...newTransactionData,
+              customerPhone: newTransactionData.customerPhone || 'N/A',
             };
-
             await paymentNotification(notificationInput);
             console.log(`AI notification flow triggered for order ${data.reference}`);
         }
@@ -75,21 +73,13 @@ export async function POST(request: NextRequest) {
       case 'transaction.updated':
         console.log('Processing transaction update:', data.id);
         
-        // 1. Update transaction status in Firestore
-        await updateTransactionStatus(data.reference, data.status);
+        const updatedTransactionData = extractTransactionData(data);
+        await updateTransactionStatus(updatedTransactionData.orderId, updatedTransactionData.status, updatedTransactionData.userId);
         
-        // 2. Potentially trigger notification if it just got paid
-         if (data.status === 'PAID') {
+         if (updatedTransactionData.status === 'PAID') {
             const notificationInput: PaymentNotificationInput = {
-              orderId: data.reference,
-              productId: data.payment_method.metadata?.productId || 'unknown',
-              userId: data.payment_method.metadata?.userId || 'anonymous',
-              amount: data.amount_in_cents / 100,
-              currency: data.currency,
-              status: data.status,
-              reference: data.reference,
-              customerName: data.customer.name || 'N/A',
-              customerPhone: data.customer.phone_number || 'N/A',
+                ...updatedTransactionData,
+                customerPhone: updatedTransactionData.customerPhone || 'N/A',
             };
 
             await paymentNotification(notificationInput);

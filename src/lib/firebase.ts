@@ -1,3 +1,4 @@
+
 'use server';
 
 import {
@@ -11,22 +12,23 @@ import {
   where,
   getDocs,
   limit,
-  Firestore,
 } from 'firebase/firestore';
 import { initializeAdminApp } from '@/lib/firebase-admin';
 
 // This function should be called from server-side code (e.g., API routes)
-const getAdminDb = async (): Promise<Firestore> => {
+const getAdminDb = async () => {
   const { db } = await initializeAdminApp();
-  return db as unknown as Firestore;
+  return db;
 };
 
 export const saveTransaction = async (data: any) => {
   const db = await getAdminDb();
   const { userId, ...transactionData } = data;
 
-  if (!userId) {
-    throw new Error('User ID is required to save a transaction.');
+  if (!userId || userId === 'anonymous') {
+    console.warn('Cannot save transaction for anonymous or missing user ID.');
+    // Decide if you want to save to a different collection or just return
+    return;
   }
 
   try {
@@ -45,18 +47,31 @@ export const saveTransaction = async (data: any) => {
   }
 };
 
-export const updateTransactionStatus = async (orderId: string, status: string) => {
+export const updateTransactionStatus = async (orderId: string, status: string, userId?: string) => {
   const db = await getAdminDb();
   try {
-    // This logic is more complex now because we don't know the userId.
-    // We need to query across all user transaction subcollections.
-    // This is inefficient and not recommended for large-scale apps.
-    // For this specific use case, we assume it's okay.
-    // A better design might be a top-level 'transactions' collection with userId as a field.
+    if (userId && userId !== 'anonymous') {
+      // If we have a userId, the query is much more efficient
+      const transactionsCollection = collection(db, 'users', userId, 'transactions');
+      const q = query(transactionsCollection, where('orderId', '==', orderId), limit(1));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const transactionDoc = querySnapshot.docs[0];
+        await updateDoc(transactionDoc.ref, {
+          status,
+          updatedAt: serverTimestamp(),
+        });
+        console.log(`Transaction for order ${orderId} in user ${userId} updated to ${status}`);
+        return;
+      }
+    }
+    
+    // Fallback for cases where userId might not be in the metadata (e.g., older transactions)
+    // This is inefficient and should be avoided if possible.
+    console.warn(`Performing inefficient cross-user search for orderId: ${orderId}. Please ensure userId is passed in webhook metadata.`);
     const usersCollection = collection(db, 'users');
     const usersSnapshot = await getDocs(usersCollection);
-
-    let updated = false;
 
     for (const userDoc of usersSnapshot.docs) {
       const transactionsCollection = collection(db, 'users', userDoc.id, 'transactions');
@@ -70,14 +85,11 @@ export const updateTransactionStatus = async (orderId: string, status: string) =
           updatedAt: serverTimestamp(),
         });
         console.log(`Transaction for order ${orderId} in user ${userDoc.id} updated to ${status}`);
-        updated = true;
-        break; // Stop after finding and updating the first match
+        return; // Stop after finding and updating
       }
     }
-
-    if (!updated) {
-        console.log(`No transaction found with orderId: ${orderId} to update.`);
-    }
+    
+    console.log(`No transaction found with orderId: ${orderId} to update.`);
 
   } catch (e) {
     console.error('Error updating transaction status: ', e);

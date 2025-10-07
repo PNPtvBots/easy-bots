@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -13,7 +14,10 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Smartphone, ShoppingCart } from 'lucide-react';
+import { Smartphone, ShoppingCart, User } from 'lucide-react';
+import { useUser } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 interface ProductCardProps {
   product: Product;
@@ -32,17 +36,53 @@ const translations = {
   en: {
     buy: 'Buy',
     buyOnApp: 'Buy on Android App',
+    loginPrompt: 'Please log in to purchase.',
   },
   es: {
     buy: 'Comprar',
     buyOnApp: 'Comprar en la App',
+    loginPrompt: 'Por favor, inicia sesión para comprar.',
   },
 };
 
 export function ProductCard({ product, lang }: ProductCardProps) {
   const t = translations[lang];
-  const boldCheckoutUrl = 'https://checkout.bold.co/';
-  const boldApplinkUrl = 'bold://checkout/';
+  const { user } = useUser();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const getCheckoutUrl = (currency: 'USD' | 'COP') => {
+    const baseUrl = 'https://checkout.bold.co/';
+    const params = new URLSearchParams({
+      item_id: product.id,
+      currency: currency,
+    });
+
+    if (user) {
+      params.append('payment_method[metadata][userId]', user.uid);
+      if (user.email) {
+        params.append('customer[email]', user.email);
+      }
+      if (user.displayName) {
+        params.append('customer[name]', user.displayName);
+      }
+    }
+    
+    return `${baseUrl}?${params.toString()}`;
+  };
+
+  const handleBuyClick = (currency: 'USD' | 'COP') => {
+    if (!user) {
+      toast({
+        title: t.loginPrompt,
+        variant: 'destructive',
+      });
+      router.push(`/login?lang=${lang}`);
+    } else {
+      window.open(getCheckoutUrl(currency), '_blank');
+    }
+  };
+
 
   return (
     <Card className="flex flex-col overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
@@ -77,21 +117,17 @@ export function ProductCard({ product, lang }: ProductCardProps) {
       </CardContent>
       <CardFooter className="p-4 bg-muted/30 flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-2 w-full">
-          <Button asChild style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
-            <Link href={`${boldCheckoutUrl}?item_id=${product.id}&currency=USD`} target="_blank">
+          <Button onClick={() => handleBuyClick('USD')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
               <ShoppingCart />
               {t.buy} (USD)
-            </Link>
           </Button>
-          <Button asChild style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
-            <Link href={`${boldCheckoutUrl}?item_id=${product.id}&currency=COP`} target="_blank">
+          <Button onClick={() => handleBuyClick('COP')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
               <ShoppingCart />
               {t.buy} (COP)
-            </Link>
           </Button>
         </div>
         <Button asChild variant="outline" className="w-full">
-          <Link href={`${boldApplinkUrl}?item_id=${product.id}`} target="_blank">
+          <Link href={`bold://checkout/?item_id=${product.id}`} target="_blank">
             <Smartphone />
             {t.buyOnApp}
           </Link>

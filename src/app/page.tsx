@@ -1,7 +1,12 @@
+
+'use client';
 import { products } from '@/lib/products';
 import { ProductCard } from '@/components/product-card';
-import { Bot } from 'lucide-react';
+import { Bot, User as UserIcon, LogOut } from 'lucide-react';
 import Link from 'next/link';
+import { useUser } from '@/firebase';
+import { getAuth, signOut } from 'firebase/auth';
+import { Button } from '@/components/ui/button';
 
 const translations = {
   en: {
@@ -12,6 +17,8 @@ const translations = {
     terms: 'Terms & Conditions',
     privacy: 'Privacy Policy',
     refund: 'Refund Policy',
+    login: 'Login',
+    logout: 'Logout',
   },
   es: {
     title: 'Tienda EasyBots',
@@ -21,30 +28,57 @@ const translations = {
     terms: 'Términos y Condiciones',
     privacy: 'Política de Privacidad',
     refund: 'Política de Reembolsos',
+    login: 'Iniciar Sesión',
+    logout: 'Cerrar Sesión',
   },
 };
 
 export default function Home({ searchParams }: { searchParams: { lang?: string } }) {
   const lang = searchParams.lang === 'es' ? 'es' : 'en';
   const t = translations[lang];
+  const { user, isUserLoading } = useUser();
+  const auth = getAuth();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+  };
 
   return (
     <>
-      <header className="text-center mb-12">
-        <div className="flex justify-end mb-4">
+      <header className="mb-12">
+        <div className="flex justify-end items-center gap-4 mb-4">
           <Link href={lang === 'en' ? '/?lang=es' : '/'} className="text-sm font-medium text-muted-foreground hover:text-primary">
             {lang === 'en' ? 'Español' : 'English'}
           </Link>
+          {!isUserLoading && (
+            user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">{user.email}</span>
+                <Button variant="ghost" size="icon" onClick={handleLogout} title={t.logout}>
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button asChild variant="outline">
+                <Link href={`/login?lang=${lang}`}>
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  {t.login}
+                </Link>
+              </Button>
+            )
+          )}
         </div>
-        <div className="inline-flex items-center gap-4 mb-4">
-          <Bot className="h-12 w-12 text-primary" />
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-headline">
-            {t.title}
-          </h1>
+        <div className="text-center">
+          <div className="inline-flex items-center gap-4 mb-4">
+            <Bot className="h-12 w-12 text-primary" />
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight font-headline">
+              {t.title}
+            </h1>
+          </div>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
+            {t.description}
+          </p>
         </div>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-          {t.description}
-        </p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
