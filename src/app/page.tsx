@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useUser } from '@/firebase';
 import { getAuth, signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
+import { useSearchParams } from 'next/navigation';
 
 const translations = {
   en: {
@@ -33,8 +34,9 @@ const translations = {
   },
 };
 
-export default function Home({ searchParams }: { searchParams: { lang?: string } }) {
-  const lang = searchParams.lang === 'es' ? 'es' : 'en';
+export default function Home() {
+  const searchParams = useSearchParams();
+  const lang = searchParams.get('lang') === 'es' ? 'es' : 'en';
   const t = translations[lang];
   const { user, isUserLoading } = useUser();
   const auth = getAuth();

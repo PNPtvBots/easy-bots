@@ -1,4 +1,6 @@
-import Link from 'next/link';
+
+'use client';
+import { useSearchParams } from 'next/navigation';
 import { LegalPageLayout, translations } from '@/components/legal-page-layout';
 
 const content = {
@@ -38,8 +40,9 @@ const content = {
   },
 };
 
-export default function PrivacyPage({ searchParams }: { searchParams: { lang?: string } }) {
-  const lang = searchParams.lang === 'es' ? 'es' : 'en';
+export default function PrivacyPage() {
+  const searchParams = useSearchParams();
+  const lang = searchParams.get('lang') === 'es' ? 'es' : 'en';
   const t = content[lang];
   const commonT = translations[lang];
 

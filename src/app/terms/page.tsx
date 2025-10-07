@@ -1,4 +1,6 @@
-import Link from 'next/link';
+
+'use client';
+import { useSearchParams } from 'next/navigation';
 import { LegalPageLayout, translations } from '@/components/legal-page-layout';
 
 const content = {
@@ -24,7 +26,7 @@ const content = {
     content: `
       <p>¡Bienvenido a la Tienda EasyBots! Estos términos y condiciones describen las reglas y regulaciones para el uso de nuestro sitio web y servicios.</p>
       <h2 class="text-xl font-bold mt-6 mb-2">1. Interpretación y Definiciones</h2>
-      <p>Las palabras cuya letra inicial está en mayúscula tienen significados definidos en las siguientes condiciones. Las siguientes definiciones tendrán el mismo significado independientemente de que aparezcan en singular o en plural.</p>
+      <p>Las palabras cuya letra inicial está en mayúscula tienen significados definidos en las siguientes condiciones. Las siguientes definitions tendrán el mismo significado independientemente de que aparezcan en singular o en plural.</p>
       <h2 class="text-xl font-bold mt-6 mb-2">2. Reconocimiento</h2>
       <p>Al acceder a este sitio web, asumimos que acepta estos términos y condiciones. No continúe usando la Tienda EasyBots si no está de acuerdo con todos los términos y condiciones establecidos en esta página.</p>
       <h2 class="text-xl font-bold mt-6 mb-2">3. Propiedad Intelectual</h2>
@@ -39,8 +41,9 @@ const content = {
 };
 
 
-export default function TermsPage({ searchParams }: { searchParams: { lang?: string } }) {
-  const lang = searchParams.lang === 'es' ? 'es' : 'en';
+export default function TermsPage() {
+  const searchParams = useSearchParams();
+  const lang = searchParams.get('lang') === 'es' ? 'es' : 'en';
   const t = content[lang];
   const commonT = translations[lang];
 
