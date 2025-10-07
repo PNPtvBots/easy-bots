@@ -81,7 +81,7 @@ export const products: Product[] = [
     description_es: 'Una landing page sencilla y efectiva para capturar leads para tu negocio.',
     image: findImage('landing-page-leads'),
     prices: {
-      usd: 50,
+      usd: 49,
       cop: 196000,
     },
   },
@@ -93,8 +93,8 @@ export const products: Product[] = [
     description_es: 'Manejo de suscriptores, ocupación, ventas de e-commerce y más opciones.',
     image: findImage('telegram-bot'),
     prices: {
-      usd: 60,
-      cop: 240000,
+      usd: 59,
+      cop: 236000,
     },
   },
 ];
