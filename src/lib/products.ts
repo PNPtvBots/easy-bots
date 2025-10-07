@@ -3,7 +3,9 @@ import { PlaceHolderImages } from './placeholder-images';
 export type Product = {
   id: string;
   name: string;
+  name_es: string;
   description: string;
+  description_es: string;
   image: {
     src: string;
     hint: string;
@@ -26,7 +28,9 @@ export const products: Product[] = [
   {
     id: 'botpress-expert',
     name: 'BotPress Expert',
+    name_es: 'Experto en BotPress',
     description: 'Master chatbot building and management with our premier BotPress development service.',
+    description_es: 'Domina la creación y gestión de chatbots con nuestro principal servicio de desarrollo de BotPress.',
     image: findImage('botpress-expert'),
     prices: {
       usd: 149,
@@ -36,7 +40,9 @@ export const products: Product[] = [
   {
     id: 'voiceflow-assistant',
     name: 'Voiceflow Assistant',
+    name_es: 'Asistente de Voiceflow',
     description: 'Create sophisticated, voice-enabled applications and assistants for any platform.',
+    description_es: 'Crea aplicaciones y asistentes de voz sofisticados para cualquier plataforma.',
     image: findImage('voiceflow-assistant'),
     prices: {
       usd: 129,
@@ -46,7 +52,9 @@ export const products: Product[] = [
   {
     id: 'manychat-automator',
     name: 'ManyChat Automator',
+    name_es: 'Automatizador de ManyChat',
     description: 'Automate your Messenger marketing to engage customers and drive sales effortlessly.',
+    description_es: 'Automatiza tu marketing de Messenger para atraer clientes e impulsar las ventas sin esfuerzo.',
     image: findImage('manychat-automator'),
     prices: {
       usd: 99,
@@ -56,7 +64,9 @@ export const products: Product[] = [
   {
     id: 'dialogflow-integrator',
     name: 'Dialogflow Integrator',
+    name_es: 'Integrador de Dialogflow',
     description: 'Integrate powerful conversational AI into your apps with Google\'s Dialogflow.',
+    description_es: 'Integra una potente IA conversacional en tus aplicaciones con Dialogflow de Google.',
     image: findImage('dialogflow-integrator'),
     prices: {
       usd: 199,

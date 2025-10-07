@@ -17,6 +17,7 @@ import { Smartphone, ShoppingCart } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
+  lang: 'en' | 'es';
 }
 
 const formatCurrency = (amount: number, currency: 'USD' | 'COP') => {
@@ -27,7 +28,19 @@ const formatCurrency = (amount: number, currency: 'USD' | 'COP') => {
   }).format(amount);
 };
 
-export function ProductCard({ product }: ProductCardProps) {
+const translations = {
+  en: {
+    buy: 'Buy',
+    buyOnApp: 'Buy on Android App',
+  },
+  es: {
+    buy: 'Comprar',
+    buyOnApp: 'Comprar en la App',
+  },
+};
+
+export function ProductCard({ product, lang }: ProductCardProps) {
+  const t = translations[lang];
   const boldCheckoutUrl = 'https://checkout.bold.co/';
   const boldApplinkUrl = 'bold://checkout/';
 
@@ -45,8 +58,8 @@ export function ProductCard({ product }: ProductCardProps) {
           />
         </div>
         <div className="p-6">
-          <CardTitle className="font-headline text-xl">{product.name}</CardTitle>
-          <CardDescription className="mt-2 min-h-[40px]">{product.description}</CardDescription>
+          <CardTitle className="font-headline text-xl">{lang === 'es' ? product.name_es : product.name}</CardTitle>
+          <CardDescription className="mt-2 min-h-[40px]">{lang === 'es' ? product.description_es : product.description}</CardDescription>
         </div>
       </CardHeader>
       <CardContent className="p-6 flex-grow">
@@ -67,20 +80,20 @@ export function ProductCard({ product }: ProductCardProps) {
           <Button asChild style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
             <Link href={`${boldCheckoutUrl}?item_id=${product.id}&currency=USD`} target="_blank">
               <ShoppingCart />
-              Buy (USD)
+              {t.buy} (USD)
             </Link>
           </Button>
           <Button asChild style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
             <Link href={`${boldCheckoutUrl}?item_id=${product.id}&currency=COP`} target="_blank">
               <ShoppingCart />
-              Buy (COP)
+              {t.buy} (COP)
             </Link>
           </Button>
         </div>
         <Button asChild variant="outline" className="w-full">
           <Link href={`${boldApplinkUrl}?item_id=${product.id}`} target="_blank">
             <Smartphone />
-            Buy on Android App
+            {t.buyOnApp}
           </Link>
         </Button>
       </CardFooter>
