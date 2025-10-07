@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "botpress-expert",
+      "description": "A robot expert for BotPress.",
+      "imageUrl": "https://picsum.photos/seed/bot1/600/400",
+      "imageHint": "robot chatbot"
+    },
+    {
+      "id": "voiceflow-assistant",
+      "description": "A voice assistant for Voiceflow.",
+      "imageUrl": "https://images.unsplash.com/photo-1605648916361-9bc12ad6a569?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx2b2ljZSUyMGFzc2lzdGFudHxlbnwwfHx8fDE3NTk3NTQxNTB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "voice assistant"
+    },
+    {
+      "id": "manychat-automator",
+      "description": "An automation bot for ManyChat.",
+      "imageUrl": "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtYXJrZXRpbmclMjBhdXRvbWF0aW9ufGVufDB8fHx8MTc1OTc4Mzc1NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "marketing automation"
+    },
+    {
+      "id": "dialogflow-integrator",
+      "description": "An integration bot for Dialogflow.",
+      "imageUrl": "https://picsum.photos/seed/bot4/600/400",
+      "imageHint": "ai integration"
+    }
+  ]
 }
