@@ -11,7 +11,7 @@ const content = {
       <h2 class="text-xl font-bold mt-6 mb-2">2. Digital Products</h2>
       <p>We do not issue refunds for digital products once the order is confirmed and the product is sent. We recommend contacting us for assistance if you experience any issues receiving or downloading our products.</p>
       <h2 class="text-xl font-bold mt-6 mb-2">3. Contact Us</h2>
-      <p>If you have any questions about our Returns and Refunds Policy, please contact us by email: support@easybots.com</p>
+      <p>If you have any questions about our Returns and Refunds Policy, please contact us by email: support@easybots.store</p>
       <p class="mt-6 text-sm text-muted-foreground">Last updated: ${new Date().toLocaleDateString()}</p>
     `,
   },
@@ -24,14 +24,14 @@ const content = {
       <h2 class="text-xl font-bold mt-6 mb-2">2. Productos Digitales</h2>
       <p>No emitimos reembolsos por productos digitales una vez que se confirma el pedido y se envía el producto. Le recomendamos que se ponga en contacto con nosotros para obtener ayuda si experimenta algún problema al recibir o descargar nuestros productos.</p>
       <h2 class="text-xl font-bold mt-6 mb-2">3. Contáctenos</h2>
-      <p>Si tiene alguna pregunta sobre nuestra Política de Devoluciones y Reembolsos, contáctenos por correo electrónico: support@easybots.com</p>
+      <p>Si tiene alguna pregunta sobre nuestra Política de Devoluciones y Reembolsos, contáctenos por correo electrónico: support@easybots.store</p>
       <p class="mt-6 text-sm text-muted-foreground">Última actualización: ${new Date().toLocaleDateString()}</p>
     `,
   },
 };
 
 
-export default function RefundPage({ searchParams }: { searchParams: { lang?: string } }) {
+export default function RefundPage({ searchParams }: { searchParams: { lang?: 'es' } }) {
   const lang = searchParams.lang === 'es' ? 'es' : 'en';
   const t = content[lang];
   const commonT = translations[lang];
