@@ -9,12 +9,18 @@ const translations = {
     description: 'Welcome to the official store for EasyBots. Supercharge your business with our cutting-edge AI chatbot solutions and automation tools.',
     footer: 'All rights reserved.',
     payments: 'Payments powered by',
+    terms: 'Terms & Conditions',
+    privacy: 'Privacy Policy',
+    refund: 'Refund Policy',
   },
   es: {
     title: 'Tienda EasyBots',
     description: 'Bienvenido a la tienda oficial de EasyBots. Potencia tu negocio con nuestras soluciones de chatbot de IA y herramientas de automatización de vanguardia.',
     footer: 'Todos los derechos reservados.',
     payments: 'Pagos impulsados por',
+    terms: 'Términos y Condiciones',
+    privacy: 'Política de Privacidad',
+    refund: 'Política de Reembolsos',
   },
 };
 
@@ -23,7 +29,7 @@ export default function Home({ searchParams }: { searchParams: { lang?: string }
   const t = translations[lang];
 
   return (
-    <main className="container mx-auto px-4 py-12 md:py-16">
+    <>
       <header className="text-center mb-12">
         <div className="flex justify-end mb-4">
           <Link href={lang === 'en' ? '/?lang=es' : '/'} className="text-sm font-medium text-muted-foreground hover:text-primary">
@@ -48,6 +54,11 @@ export default function Home({ searchParams }: { searchParams: { lang?: string }
       </div>
 
       <footer className="text-center mt-16 text-muted-foreground text-sm">
+        <div className="flex justify-center gap-4 mb-2">
+            <Link href={`/terms?lang=${lang}`} className="font-medium text-foreground hover:text-primary transition-colors">{t.terms}</Link>
+            <Link href={`/privacy?lang=${lang}`} className="font-medium text-foreground hover:text-primary transition-colors">{t.privacy}</Link>
+            <Link href={`/refund?lang=${lang}`} className="font-medium text-foreground hover:text-primary transition-colors">{t.refund}</Link>
+        </div>
         <p>&copy; {new Date().getFullYear()} EasyBots Inc. {t.footer}</p>
         <p className="mt-1">
           {t.payments}{' '}
@@ -61,6 +72,6 @@ export default function Home({ searchParams }: { searchParams: { lang?: string }
           </a>
         </p>
       </footer>
-    </main>
+    </>
   );
 }
