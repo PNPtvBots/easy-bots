@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Not Found: Product not found.', { status: 404 });
     }
 
-    const amountInCents = (currency === 'USD' ? product.prices.usd : product.prices.cop) * 100;
+    const amountInCents = Math.round((currency === 'USD' ? product.prices.usd : product.prices.cop) * 100);
     const orderId = `easybots-${productId}-${Date.now()}`;
     const description = `Payment for ${product.name}`;
     
