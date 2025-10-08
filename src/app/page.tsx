@@ -18,6 +18,7 @@ const translations = {
     terms: 'Terms & Conditions',
     privacy: 'Privacy Policy',
     refund: 'Refund Policy',
+    allProducts: 'All Products',
     login: 'Login',
     logout: 'Logout',
   },
@@ -29,6 +30,7 @@ const translations = {
     terms: 'Términos y Condiciones',
     privacy: 'Política de Privacidad',
     refund: 'Política de Reembolsos',
+    allProducts: 'Todos los Productos',
     login: 'Iniciar Sesión',
     logout: 'Cerrar Sesión',
   },
@@ -94,6 +96,7 @@ export default function Home() {
             <Link href={`/terms?lang=${lang}`} className="font-medium text-foreground hover:text-primary transition-colors">{t.terms}</Link>
             <Link href={`/privacy?lang=${lang}`} className="font-medium text-foreground hover:text-primary transition-colors">{t.privacy}</Link>
             <Link href={`/refund?lang=${lang}`} className="font-medium text-foreground hover:text-primary transition-colors">{t.refund}</Link>
+            <Link href={`/products?lang=${lang}`} className="font-medium text-foreground hover:text-primary transition-colors">{t.allProducts}</Link>
         </div>
         <p>&copy; {new Date().getFullYear()} EasyBots Inc. {t.footer}</p>
         <p className="mt-1">
