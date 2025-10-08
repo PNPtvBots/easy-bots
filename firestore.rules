@@ -1,81 +1,9 @@
-/**
- * @fileoverview Firestore Security Rules for EasyBots Store.
- *
- * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for transactions, while allowing public read access to product information.
- *
- * Data Structure:
- * - Products are stored in a top-level `/products` collection.
- * - Transactions are stored in a nested `/users/{userId}/transactions` subcollection.
- *
- * Key Security Decisions:
- * - Products are publicly readable but only modifiable through backend processes (not defined in this ruleset).
- * - Transactions are strictly user-owned; a user can only access their own transaction data.
- * - Listing all users or transactions across all users is explicitly denied.
- *
- * Denormalization for Authorization:
- * The transaction data is nested under `/users/{userId}`. This makes it possible to implement ownership checks.
- * The `Transaction` documents requires `userId` for path consistency and authorization.
- */
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * @description Allows public read access to product information. Write access is restricted.
-     * @path /products/{productId}
-     * @allow (get, list)
-     * @deny (create, update, delete)
-     * @principle Allows public read access to product data, while restricting write access.
-     */
-    match /products/{productId} {
-      allow get, list: if true;
-      allow create, update, delete: if false;
-    }
-
-    /**
-     * @description Enforces user-ownership for transactions. Only the authenticated user can create, read, update, or delete their own transactions.
-     * @path /users/{userId}/transactions/{transactionId}
-     * @allow (create) User with ID userId can create a transaction with transactionId
-     * @allow (get, list, update, delete) User with ID userId can read, update, or delete a transaction with transactionId if they own it.
-     * @deny (create) User with ID otherUserId cannot create a transaction with transactionId under /users/{userId}.
-     * @deny (get, list, update, delete) User with ID otherUserId cannot read, update, or delete a transaction with transactionId under /users/{userId}.
-     * @principle Enforces document ownership for writes.
-     */
-    match /users/{userId}/transactions/{transactionId} {
-      allow get: if isSignedIn() && isOwner(userId);
-      allow list: if isSignedIn() && isOwner(userId);
-      allow create: if isSignedIn() && request.resource.data.userId == userId;
-      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-      allow delete: if isSignedIn() && isExistingOwner(userId);
-    }
-
-    // --- Helper functions ---
-
-    /**
-     * @description Checks if the user is signed in.
-     * @return {bool} True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the user is the owner of the resource.
-     * @param {string} userId The user ID to compare against the request's authentication UID.
-     * @return {bool} True if the user is the owner, false otherwise.
-     */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the user is the owner of the resource and if the resource exists.
-     * @param {string} userId The user ID to compare against the resource's userId.
-     * @return {bool} True if the user is the owner and the resource exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
