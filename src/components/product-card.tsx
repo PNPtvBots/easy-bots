@@ -14,10 +14,11 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Smartphone, ShoppingCart, User } from 'lucide-react';
+import { Smartphone, ShoppingCart, Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 interface ProductCardProps {
   product: Product;
@@ -37,11 +38,13 @@ const translations = {
     buy: 'Buy',
     buyOnApp: 'Buy on Android App',
     loginPrompt: 'Please log in to purchase.',
+    purchaseError: 'Could not create payment link. Please try again.',
   },
   es: {
     buy: 'Comprar',
     buyOnApp: 'Comprar en la App',
     loginPrompt: 'Por favor, inicia sesión para comprar.',
+    purchaseError: 'No se pudo crear el enlace de pago. Por favor, inténtalo de nuevo.',
   },
 };
 
@@ -50,61 +53,62 @@ export function ProductCard({ product, lang }: ProductCardProps) {
   const { user } = useUser();
   const { toast } = useToast();
   const router = useRouter();
-
-  const getCheckoutUrl = (currency: 'USD' | 'COP') => {
-    const baseUrl = 'https://checkout.bold.co/v1/payment-link/d9685121-a4f1-4654-a63d-9d29b28b6d3a';
-    const params = new URLSearchParams({
-      'item-id': product.id,
-      'currency': currency,
-      'payment_method[metadata][productId]': product.id,
-    });
-
-    if (user) {
-      params.append('payment_method[metadata][userId]', user.uid);
-      if (user.email) {
-        params.append('customer[email]', user.email);
-      }
-      if (user.displayName) {
-        params.append('customer[name]', user.displayName);
-      }
-      if(user.phoneNumber) {
-        params.append('customer[phone_number]', user.phoneNumber);
-      }
-    }
-    
-    return `${baseUrl}?${params.toString()}`;
-  };
+  const [isLoading, setIsLoading] = useState< 'USD' | 'COP' | null>(null);
 
   const getAppLink = () => {
-    const baseUrl = `bold://checkout/`;
     const params = new URLSearchParams({
       'item_id': product.id,
     });
-
      if (user) {
       params.append('payment_method[metadata][userId]', user.uid);
-      if (user.email) {
-        params.append('customer[email]', user.email);
-      }
-      if (user.displayName) {
-        params.append('customer[name]', user.displayName);
-      }
-      if(user.phoneNumber) {
-        params.append('customer[phone_number]', user.phoneNumber);
-      }
+      if (user.email) params.append('customer[email]', user.email);
+      if (user.displayName) params.append('customer[name]', user.displayName);
+      if(user.phoneNumber) params.append('customer[phone_number]', user.phoneNumber);
     }
-    return `${baseUrl}?${params.toString()}`;
+    return `bold://checkout/?${params.toString()}`;
   }
 
-  const handleBuyClick = (currency: 'USD' | 'COP') => {
+  const handleBuyClick = async (currency: 'USD' | 'COP') => {
     if (!user) {
       toast({
         title: t.loginPrompt,
         variant: 'destructive',
       });
       router.push(`/login?lang=${lang}`);
-    } else {
-      window.open(getCheckoutUrl(currency), '_blank');
+      return;
+    }
+    
+    setIsLoading(currency);
+    
+    try {
+      const response = await fetch('/api/create-payment-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: product.id,
+          currency: currency,
+          userId: user.uid,
+          userEmail: user.email,
+          userName: user.displayName,
+          userPhone: user.phoneNumber,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create payment link');
+      }
+
+      const { paymentLink } = await response.json();
+      window.open(paymentLink, '_blank');
+
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: t.purchaseError,
+        variant: 'destructive',
+      });
+    } finally {
+        setIsLoading(null);
     }
   };
 
@@ -142,12 +146,12 @@ export function ProductCard({ product, lang }: ProductCardProps) {
       </CardContent>
       <CardFooter className="p-4 bg-muted/30 flex flex-col gap-3">
         <div className="grid grid-cols-2 gap-2 w-full">
-          <Button onClick={() => handleBuyClick('USD')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
-              <ShoppingCart />
+          <Button onClick={() => handleBuyClick('USD')} disabled={!!isLoading} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
+              {isLoading === 'USD' ? <Loader2 className="animate-spin" /> : <ShoppingCart />}
               {t.buy} (USD)
           </Button>
-          <Button onClick={() => handleBuyClick('COP')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
-              <ShoppingCart />
+          <Button onClick={() => handleBuyClick('COP')} disabled={!!isLoading} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
+              {isLoading === 'COP' ? <Loader2 className="animate-spin" /> : <ShoppingCart />}
               {t.buy} (COP)
           </Button>
         </div>
