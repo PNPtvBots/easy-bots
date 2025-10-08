@@ -75,6 +75,27 @@ export function ProductCard({ product, lang }: ProductCardProps) {
     return `${baseUrl}?${params.toString()}`;
   };
 
+  const getAppLink = () => {
+    const baseUrl = `bold://checkout/`;
+    const params = new URLSearchParams({
+      'item_id': product.id,
+    });
+
+     if (user) {
+      params.append('payment_method[metadata][userId]', user.uid);
+      if (user.email) {
+        params.append('customer[email]', user.email);
+      }
+      if (user.displayName) {
+        params.append('customer[name]', user.displayName);
+      }
+      if(user.phoneNumber) {
+        params.append('customer[phone_number]', user.phoneNumber);
+      }
+    }
+    return `${baseUrl}?${params.toString()}`;
+  }
+
   const handleBuyClick = (currency: 'USD' | 'COP') => {
     if (!user) {
       toast({
@@ -131,7 +152,7 @@ export function ProductCard({ product, lang }: ProductCardProps) {
           </Button>
         </div>
         <Button asChild variant="outline" className="w-full">
-          <Link href={`bold://checkout/?item_id=${product.id}`} target="_blank">
+          <Link href={getAppLink()} target="_blank">
             <Smartphone />
             {t.buyOnApp}
           </Link>
