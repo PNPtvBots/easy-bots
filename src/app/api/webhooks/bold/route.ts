@@ -53,11 +53,15 @@ export async function POST(request: NextRequest) {
     };
 
     switch (eventType) {
-      case 'transaction.created':
+      case 'transaction.created': {
         console.log('Processing new transaction:', data.id);
         
         const newTransactionData = extractTransactionData(data);
-        await saveTransaction(newTransactionData);
+        if (newTransactionData.userId !== 'anonymous') {
+            await saveTransaction(newTransactionData);
+        } else {
+            console.log('Skipping transaction save for anonymous user.');
+        }
 
         if (newTransactionData.status === 'PAID') {
             const notificationInput: PaymentNotificationInput = {
@@ -69,12 +73,16 @@ export async function POST(request: NextRequest) {
         }
         
         break;
-
-      case 'transaction.updated':
+      }
+      case 'transaction.updated': {
         console.log('Processing transaction update:', data.id);
         
         const updatedTransactionData = extractTransactionData(data);
-        await updateTransactionStatus(updatedTransactionData.orderId, updatedTransactionData.status, updatedTransactionData.userId);
+        if (updatedTransactionData.userId !== 'anonymous') {
+            await updateTransactionStatus(updatedTransactionData.orderId, updatedTransactionData.status, updatedTransactionData.userId);
+        } else {
+            console.log(`Skipping transaction update for anonymous user on order ${updatedTransactionData.orderId}.`);
+        }
         
          if (updatedTransactionData.status === 'PAID') {
             const notificationInput: PaymentNotificationInput = {
@@ -86,7 +94,7 @@ export async function POST(request: NextRequest) {
             console.log(`AI notification flow triggered for updated order ${data.reference}`);
         }
         break;
-
+      }
       default:
         console.log(`Received unhandled event type: ${eventType}`);
     }
