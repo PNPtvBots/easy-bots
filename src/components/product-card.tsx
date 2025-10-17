@@ -18,7 +18,7 @@ import { Smartphone, ShoppingCart, Loader2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Script from 'next/script';
 
 interface ProductCardProps {
@@ -40,12 +40,14 @@ const translations = {
     buyOnApp: 'Buy on Android App',
     loginPrompt: 'Please log in to purchase.',
     purchaseError: 'Could not create payment link. Please try again.',
+    loadingPayment: 'Loading Payment...',
   },
   es: {
     buy: 'Comprar',
     buyOnApp: 'Comprar en la App',
     loginPrompt: 'Por favor, inicia sesión para comprar.',
     purchaseError: 'No se pudo crear el enlace de pago. Por favor, inténtalo de nuevo.',
+    loadingPayment: 'Cargando Pago...',
   },
 };
 
@@ -54,6 +56,7 @@ export function ProductCard({ product, lang }: ProductCardProps) {
   const { user } = useUser();
   const { toast } = useToast();
   const router = useRouter();
+  const [isEpaycoReady, setIsEpaycoReady] = useState(false);
 
   const handleBuyClick = (currency: 'USD' | 'COP') => {
     if (!user) {
@@ -62,6 +65,15 @@ export function ProductCard({ product, lang }: ProductCardProps) {
         variant: 'destructive',
       });
       router.push(`/login?lang=${lang}`);
+      return;
+    }
+    
+    if (!isEpaycoReady || !(window as any).ePayco) {
+      toast({
+        title: 'Payment system not ready',
+        description: 'Please wait a moment and try again.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -106,8 +118,6 @@ export function ProductCard({ product, lang }: ProductCardProps) {
   };
 
   const getAppLink = () => {
-    // This deep link logic might need to be adjusted if Epayco has a different format.
-    // For now, we'll keep the Bold structure as a placeholder.
     const params = new URLSearchParams({
       'item_id': product.id,
     });
@@ -122,6 +132,13 @@ export function ProductCard({ product, lang }: ProductCardProps) {
 
   return (
     <>
+      <Script 
+        src="https://checkout.epayco.co/checkout.js" 
+        strategy="beforeInteractive"
+        onLoad={() => {
+          setIsEpaycoReady(true);
+        }}
+      />
       <Card className="flex flex-col overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
         <CardHeader className="p-0">
           <div className="aspect-[3/2] relative w-full">
@@ -154,13 +171,13 @@ export function ProductCard({ product, lang }: ProductCardProps) {
         </CardContent>
         <CardFooter className="p-4 bg-muted/30 flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-2 w-full">
-            <Button onClick={() => handleBuyClick('USD')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
-                <ShoppingCart />
-                {t.buy} (USD)
+            <Button onClick={() => handleBuyClick('USD')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90" disabled={!isEpaycoReady}>
+                {isEpaycoReady ? <ShoppingCart /> : <Loader2 className="animate-spin" />}
+                {isEpaycoReady ? `${t.buy} (USD)` : t.loadingPayment}
             </Button>
-            <Button onClick={() => handleBuyClick('COP')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
-                <ShoppingCart />
-                {t.buy} (COP)
+            <Button onClick={() => handleBuyClick('COP')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90" disabled={!isEpaycoReady}>
+                {isEpaycoReady ? <ShoppingCart /> : <Loader2 className="animate-spin" />}
+                {isEpaycoReady ? `${t.buy} (COP)` : t.loadingPayment}
             </Button>
           </div>
           <Button asChild variant="outline" className="w-full">

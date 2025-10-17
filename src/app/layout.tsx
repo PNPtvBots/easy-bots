@@ -29,7 +29,6 @@ export default function RootLayout({
           </main>
           <Toaster />
         </FirebaseClientProvider>
-        <Script src="https://checkout.epayco.co/checkout.js" strategy="lazyOnload" />
       </body>
     </html>
   );
