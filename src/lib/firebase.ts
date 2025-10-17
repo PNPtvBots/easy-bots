@@ -27,7 +27,7 @@ export const saveTransaction = async (data: any) => {
 
   if (!userId || userId === 'anonymous') {
     console.warn('Cannot save transaction for anonymous or missing user ID.');
-    // Decide if you want to save to a different collection or just return
+    // Do not save transaction for anonymous users, just return.
     return;
   }
 

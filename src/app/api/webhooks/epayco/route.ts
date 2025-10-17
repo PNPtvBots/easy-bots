@@ -7,10 +7,12 @@ import { saveTransaction, updateTransactionStatus } from '@/lib/firebase';
 
 const pKey = process.env.EPAYCO_P_KEY;
 const publicKey = process.env.EPAYCO_PUBLIC_KEY;
+const p_cust_id_cliente = process.env.EPAYCO_P_CUST_ID;
+
 
 export async function POST(request: NextRequest) {
-  if (!pKey || !publicKey) {
-    console.error('Epayco public or private keys are not set.');
+  if (!pKey || !publicKey || !p_cust_id_cliente) {
+    console.error('Epayco public, private, or customer ID keys are not set.');
     return new NextResponse('Internal Server Error: Webhook secret not configured.', { status: 500 });
   }
   
@@ -22,14 +24,13 @@ export async function POST(request: NextRequest) {
     return new NextResponse('Bad Request: Missing x_signature.', { status: 400 });
   }
 
-  const p_cust_id_cliente = process.env.EPAYCO_P_CUST_ID;
-  const p_key = process.env.EPAYCO_P_KEY;
   const x_ref_payco = data.get('x_ref_payco');
   const x_transaction_id = data.get('x_transaction_id');
   const x_amount = data.get('x_amount');
   const x_currency_code = data.get('x_currency_code');
+  const x_cod_transaction_state = data.get('x_cod_transaction_state');
   
-  const signatureString = `${p_cust_id_cliente}^${p_key}^${x_ref_payco}^${x_transaction_id}^${x_amount}^${x_currency_code}`;
+  const signatureString = `${p_cust_id_cliente}^${pKey}^${x_ref_payco}^${x_transaction_id}^${x_amount}^${x_currency_code}`;
   const expectedSignature = createHmac('sha256', pKey).update(signatureString).digest('hex');
 
   if (signature !== expectedSignature) {
@@ -38,10 +39,14 @@ export async function POST(request: NextRequest) {
   }
   
   try {
-    const transactionStatus = data.get('x_transaction_state');
-    const orderId = data.get('x_extra1'); // We passed our internal orderId here
-    const userId = data.get('x_extra2'); // We passed our userId here
-    const productId = data.get('x_extra3'); // We passed our productId here
+    const orderId = data.get('x_extra1'); 
+    const userId = data.get('x_extra2'); 
+    const productId = data.get('x_extra3');
+
+    if (!orderId || !userId || !productId) {
+        console.error('Missing extra fields from Epayco webhook.');
+        return new NextResponse('Bad Request: Missing required transaction data.', { status: 400 });
+    }
 
     const transactionData = {
       orderId: orderId,
@@ -49,7 +54,7 @@ export async function POST(request: NextRequest) {
       userId: userId,
       amount: parseFloat(data.get('x_amount') || '0'),
       currency: data.get('x_currency_code'),
-      status: data.get('x_cod_transaction_state') === '1' ? 'PAID' : (data.get('x_cod_transaction_state') === '3' ? 'PENDING' : 'FAILED'),
+      status: x_cod_transaction_state === '1' ? 'PAID' : (x_cod_transaction_state === '3' ? 'PENDING' : 'FAILED'),
       reference: data.get('x_ref_payco'),
       customerName: data.get('x_customer_name') || 'N/A',
       customerEmail: data.get('x_customer_email') || 'N/A',
@@ -70,7 +75,7 @@ export async function POST(request: NextRequest) {
         await updateTransactionStatus(transactionData.orderId, transactionData.status, transactionData.userId);
     }
     
-    return NextResponse.json({ success: true, message: 'Webhook received and processed.' });
+    return new NextResponse('OK', { status: 200 });
 
   } catch (error) {
     console.error('Error processing Epayco webhook:', error);
@@ -80,3 +85,4 @@ export async function POST(request: NextRequest) {
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
+
