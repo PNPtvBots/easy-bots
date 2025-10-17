@@ -19,6 +19,7 @@ import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import Script from 'next/script';
 
 interface ProductCardProps {
   product: Product;
@@ -53,9 +54,60 @@ export function ProductCard({ product, lang }: ProductCardProps) {
   const { user } = useUser();
   const { toast } = useToast();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState< 'USD' | 'COP' | null>(null);
+
+  const handleBuyClick = (currency: 'USD' | 'COP') => {
+    if (!user) {
+      toast({
+        title: t.loginPrompt,
+        variant: 'destructive',
+      });
+      router.push(`/login?lang=${lang}`);
+      return;
+    }
+
+    const handler = (window as any).ePayco.checkout.create({
+      key: process.env.NEXT_PUBLIC_EPAYCO_PUBLIC_KEY,
+      test: process.env.NEXT_PUBLIC_EPAYCO_TEST === 'true',
+    });
+
+    const amount = currency === 'USD' ? product.prices.usd : product.prices.cop;
+    const orderId = `easybots-${product.id}-${Date.now()}`;
+
+    handler.open({
+      //Standard Checkout Parameters
+      name: lang === 'es' ? product.name_es : product.name,
+      description: lang === 'es' ? product.description_es : product.description,
+      invoice: orderId,
+      currency: currency,
+      amount: amount.toString(),
+      country: currency === 'COP' ? 'CO' : 'US',
+      lang: lang,
+
+      //Onpage="false" - Standard Checkout parameters
+      external: 'false',
+
+      //Confirmation page
+      confirmation: `${window.location.origin}/api/webhooks/epayco`,
+      response: `${window.location.origin}/`,
+
+      //Customer information
+      name_billing: user.displayName || 'N/A',
+      address_billing: 'N/A',
+      type_doc_billing: 'CC',
+      mobilephone_billing: user.phoneNumber || '3000000000',
+      number_doc_billing: '123456789',
+      email_billing: user.email,
+
+      //Extra fields
+      extra1: orderId,
+      extra2: user.uid,
+      extra3: product.id,
+    });
+  };
 
   const getAppLink = () => {
+    // This deep link logic might need to be adjusted if Epayco has a different format.
+    // For now, we'll keep the Bold structure as a placeholder.
     const params = new URLSearchParams({
       'item_id': product.id,
     });
@@ -68,100 +120,57 @@ export function ProductCard({ product, lang }: ProductCardProps) {
     return `bold://checkout/?${params.toString()}`;
   }
 
-  const handleBuyClick = async (currency: 'USD' | 'COP') => {
-    if (!user) {
-      toast({
-        title: t.loginPrompt,
-        variant: 'destructive',
-      });
-      router.push(`/login?lang=${lang}`);
-      return;
-    }
-    
-    setIsLoading(currency);
-    
-    try {
-      const response = await fetch('/api/create-payment-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productId: product.id,
-          currency: currency,
-          userId: user.uid,
-          userEmail: user.email,
-          userName: user.displayName,
-          userPhone: user.phoneNumber,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create payment link');
-      }
-
-      const { paymentLink } = await response.json();
-      window.open(paymentLink, '_blank');
-
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: t.purchaseError,
-        variant: 'destructive',
-      });
-    } finally {
-        setIsLoading(null);
-    }
-  };
-
-
   return (
-    <Card className="flex flex-col overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
-      <CardHeader className="p-0">
-        <div className="aspect-[3/2] relative w-full">
-          <Image
-            src={product.image.src}
-            alt={product.name}
-            fill
-            className="object-cover"
-            data-ai-hint={product.image.hint}
-            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          />
-        </div>
-        <div className="p-6">
-          <CardTitle className="font-headline text-xl">{lang === 'es' ? product.name_es : product.name}</CardTitle>
-          <CardDescription className="mt-2 min-h-[40px]">{lang === 'es' ? product.description_es : product.description}</CardDescription>
-        </div>
-      </CardHeader>
-      <CardContent className="p-6 flex-grow">
-        <div className="flex justify-around items-center text-center">
-          <div>
-            <p className="text-sm text-muted-foreground">USD</p>
-            <p className="text-2xl font-bold">{formatCurrency(product.prices.usd, 'USD')}</p>
+    <>
+      <Card className="flex flex-col overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300">
+        <CardHeader className="p-0">
+          <div className="aspect-[3/2] relative w-full">
+            <Image
+              src={product.image.src}
+              alt={product.name}
+              fill
+              className="object-cover"
+              data-ai-hint={product.image.hint}
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            />
           </div>
-          <Separator orientation="vertical" className="h-10" />
-          <div>
-            <p className="text-sm text-muted-foreground">COP</p>
-            <p className="text-2xl font-bold">{formatCurrency(product.prices.cop, 'COP')}</p>
+          <div className="p-6">
+            <CardTitle className="font-headline text-xl">{lang === 'es' ? product.name_es : product.name}</CardTitle>
+            <CardDescription className="mt-2 min-h-[40px]">{lang === 'es' ? product.description_es : product.description}</CardDescription>
           </div>
-        </div>
-      </CardContent>
-      <CardFooter className="p-4 bg-muted/30 flex flex-col gap-3">
-        <div className="grid grid-cols-2 gap-2 w-full">
-          <Button onClick={() => handleBuyClick('USD')} disabled={!!isLoading} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
-              {isLoading === 'USD' ? <Loader2 className="animate-spin" /> : <ShoppingCart />}
-              {t.buy} (USD)
+        </CardHeader>
+        <CardContent className="p-6 flex-grow">
+          <div className="flex justify-around items-center text-center">
+            <div>
+              <p className="text-sm text-muted-foreground">USD</p>
+              <p className="text-2xl font-bold">{formatCurrency(product.prices.usd, 'USD')}</p>
+            </div>
+            <Separator orientation="vertical" className="h-10" />
+            <div>
+              <p className="text-sm text-muted-foreground">COP</p>
+              <p className="text-2xl font-bold">{formatCurrency(product.prices.cop, 'COP')}</p>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="p-4 bg-muted/30 flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-2 w-full">
+            <Button onClick={() => handleBuyClick('USD')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
+                <ShoppingCart />
+                {t.buy} (USD)
+            </Button>
+            <Button onClick={() => handleBuyClick('COP')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
+                <ShoppingCart />
+                {t.buy} (COP)
+            </Button>
+          </div>
+          <Button asChild variant="outline" className="w-full">
+            <Link href={getAppLink()} target="_blank">
+              <Smartphone />
+              {t.buyOnApp}
+            </Link>
           </Button>
-          <Button onClick={() => handleBuyClick('COP')} disabled={!!isLoading} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90">
-              {isLoading === 'COP' ? <Loader2 className="animate-spin" /> : <ShoppingCart />}
-              {t.buy} (COP)
-          </Button>
-        </div>
-        <Button asChild variant="outline" className="w-full">
-          <Link href={getAppLink()} target="_blank">
-            <Smartphone />
-            {t.buyOnApp}
-          </Link>
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardFooter>
+      </Card>
+    </>
   );
 }

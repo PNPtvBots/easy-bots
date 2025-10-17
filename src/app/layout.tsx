@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Bot } from 'lucide-react';
 import { FirebaseClientProvider } from '@/firebase';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'EasyBots Store',
@@ -28,6 +29,7 @@ export default function RootLayout({
           </main>
           <Toaster />
         </FirebaseClientProvider>
+        <Script src="https://checkout.epayco.co/checkout.js" strategy="lazyOnload" />
       </body>
     </html>
   );
