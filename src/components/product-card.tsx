@@ -172,12 +172,12 @@ export function ProductCard({ product, lang }: ProductCardProps) {
         <CardFooter className="p-4 bg-muted/30 flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-2 w-full">
             <Button onClick={() => handleBuyClick('USD')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90" disabled={!isEpaycoReady}>
-                {isEpaycoReady ? <ShoppingCart /> : <Loader2 className="animate-spin" />}
-                {isEpaycoReady ? `${t.buy} (USD)` : t.loadingPayment}
+                {!isEpaycoReady ? <Loader2 className="animate-spin" /> : <ShoppingCart />}
+                {!isEpaycoReady ? t.loadingPayment : `${t.buy} (USD)`}
             </Button>
             <Button onClick={() => handleBuyClick('COP')} style={{ backgroundColor: 'hsl(var(--accent))', color: 'hsl(var(--accent-foreground))' }} className="hover:opacity-90" disabled={!isEpaycoReady}>
-                {isEpaycoReady ? <ShoppingCart /> : <Loader2 className="animate-spin" />}
-                {isEpaycoReady ? `${t.buy} (COP)` : t.loadingPayment}
+                {!isEpaycoReady ? <Loader2 className="animate-spin" /> : <ShoppingCart />}
+                {!isEpaycoReady ? t.loadingPayment : `${t.buy} (COP)`}
             </Button>
           </div>
           <Button asChild variant="outline" className="w-full">
